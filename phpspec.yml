@@ -1,0 +1,4 @@
+suites:
+  tabular_suite:
+    namespace: ErgonTech\Tabular
+    psr4_prefix: ErgonTech\Tabular
