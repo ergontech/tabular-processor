@@ -5,6 +5,45 @@ namespace ErgonTech\Tabular;
 class GoogleSheetsLoadStep implements Step
 {
     /**
+     * @var \Google_Service_Sheets
+     */
+    private $sheetsService;
+
+    /**
+     * @var string
+     */
+    private $sheetId;
+
+    /**
+     * @var string
+     */
+    private $headerRangeName;
+
+    /**
+     * @var string
+     */
+    private $dataRangeName;
+
+    /**
+     * GoogleSheetsLoadStep constructor.
+     * @param \Google_Service_Sheets $sheetsService
+     * @param $sheetId
+     * @param $headerRangeName
+     * @param $dataRangeName
+     */
+    public function __construct(
+        \Google_Service_Sheets $sheetsService,
+        $sheetId,
+        $headerRangeName,
+        $dataRangeName
+    ) {
+        $this->sheetsService = $sheetsService;
+        $this->sheetId = $sheetId;
+        $this->headerRangeName = $headerRangeName;
+        $this->dataRangeName = $dataRangeName;
+    }
+
+    /**
      * Accepts a Rows object and returns a rows object
      *
      * @param \ErgonTech\Tabular\Rows $rows
@@ -13,6 +52,9 @@ class GoogleSheetsLoadStep implements Step
      */
     public function __invoke(Rows $rows)
     {
-        return new Rows([]);
+        $headers = $this->sheetsService->spreadsheets_values->get($this->sheetId, $this->headerRangeName)->getValues();
+        $values = $this->sheetsService->spreadsheets_values->get($this->sheetId, $this->dataRangeName)->getValues();
+        $rows = new Rows($headers[0], $values);
+        return $rows;
     }
 }
