@@ -21,21 +21,26 @@ class RowsSpec extends ObjectBehavior
         $this->getColumnHeaders()->shouldReturn($headers);
     }
 
-    public function it_can_return_a_row()
+    public function it_can_get_rows()
     {
         $headers = ['foo', 'bar'];
-        $dataRow = ['asdf', 'fdas'];
-        $this->beConstructedWith($headers, [$dataRow]);
+        $dataRows = [['asdf', 'fdas']];
 
-        $this->getNextRow()->shouldReturn($dataRow);
+        $this->beConstructedWith($headers, $dataRows);
+        $this->getRows()->shouldReturn($dataRows);
     }
 
-    public function it_can_return_an_associative_row()
+    public function it_can_get_rows_associatively()
     {
         $headers = ['foo', 'bar'];
-        $dataRow = ['asdf', 'fdas'];
-        $this->beConstructedWith($headers, [$dataRow]);
+        $dataRows = [['asdf', 'fdas']];
+        $resultRowsAssoc = [];
+        foreach ($dataRows as $dataRow) {
+            $resultRowsAssoc[] = array_combine($headers, $dataRow);
+        }
 
-        $this->getNextRowAssoc()->shouldReturn(['foo' => 'asdf', 'bar' => 'fdas']);
+        $this->beConstructedWith($headers, $dataRows);
+        $this->getRowsAssoc()->shouldReturn($resultRowsAssoc);
+
     }
 }

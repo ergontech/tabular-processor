@@ -13,7 +13,15 @@ use Prophecy\Argument;
 
 class RowCallbackValidationStepSpec extends ObjectBehavior
 {
+    /**
+     * @var RowValidator
+     */
     private $validator;
+
+    /**
+     * @var \Closure
+     */
+    private $rowsReturner;
 
     public function let(RowValidator $validator)
     {
@@ -24,9 +32,13 @@ class RowCallbackValidationStepSpec extends ObjectBehavior
         $validator->__invoke(['hmm' => 'maybe...'], $anyLevel)->willReturn(RowValidator::WARNING);
 
         $this->validator = $validator;
+        $this->rowsReturner = function ($rows) {
+            return $rows;
+        };
 
         $this->beConstructedWith($this->validator, RowValidator::WARNING);
     }
+
     public function it_is_initializable()
     {
         $this->shouldHaveType(RowCallbackValidationStep::class);
@@ -39,7 +51,8 @@ class RowCallbackValidationStepSpec extends ObjectBehavior
 
     public function it_is_invokable_and_returns_rows(Rows $rows)
     {
-        $this->__invoke($rows)->shouldReturnAnInstanceOf(Rows::class);
+        $rows->getRowsAssoc()->willReturn([['good' => 'great!']]);
+        $this->__invoke($rows, $this->rowsReturner)->shouldReturnAnInstanceOf(Rows::class);
     }
 
     public function it_validates_each_row(Rows $rows)
@@ -50,15 +63,9 @@ class RowCallbackValidationStepSpec extends ObjectBehavior
             ['good' => 'great!']
         ];
 
-        $rows->getNextRowAssoc()->will(function() use(&$returnRows) {
-            $ret = array_shift($returnRows);
-            if (is_null($ret)) {
-                return false;
-            }
-            return $ret;
-        });
+        $rows->getRowsAssoc()->willReturn($returnRows);
         $this->validator->__invoke(['good' => 'great!'], RowValidator::WARNING)->shouldBeCalledTimes(3);
-        $this->__invoke($rows);
+        $this->__invoke($rows, $this->rowsReturner);
     }
 
     public function it_stops_validation_upon_failure(Rows $rows)
@@ -69,21 +76,13 @@ class RowCallbackValidationStepSpec extends ObjectBehavior
             ['hmm' => 'maybe...']
         ];
 
-        $rows->getNextRowAssoc()->will(function() use(&$returnRows) {
-            $ret = array_shift($returnRows);
-            if (is_null($ret)) {
-                return false;
-            }
-            return $ret;
-        });
-
+        $rows->getRowsAssoc()->willReturn($returnRows);
         $this->validator->__invoke(['good' => 'great!'], RowValidator::WARNING)->shouldBeCalled();
         $this->validator->__invoke(['bad' => 'bad!'], RowValidator::WARNING)
             ->willThrow(RowValidationException::class)
             ->shouldBeCalled();
         $this->validator->__invoke(['hmm' => 'maybe...'], RowValidator::WARNING)->shouldNotBeCalled();
 
-        $this->shouldThrow(StepExecutionException::class)->during('__invoke', [$rows]);
-        $this->__invoke($rows);
+        $this->shouldThrow(StepExecutionException::class)->during('__invoke', [$rows, $this->rowsReturner]);
     }
 }

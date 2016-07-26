@@ -6,24 +6,23 @@ namespace ErgonTech\Tabular;
 class Processor
 {
     /**
-     * @var Steps
+     * @var \SplStack
      */
     private $steps;
 
     /**
-     * @var Rows
+     * @var bool
      */
-    private $rows;
+    private $stepsLocked = false;
 
     /**
      * Processor constructor.
-     * @param Rows $rows
-     * @param Steps $steps
      */
-    public function __construct(Rows $rows, Steps $steps)
+    public function __construct()
     {
-        $this->rows = $rows;
-        $this->steps = $steps;
+        $this->steps = new \SplStack();
+        $this->steps->setIteratorMode(\SplStack::IT_MODE_LIFO | \SplStack::IT_MODE_KEEP);
+        $this->steps[] = $this;
     }
 
     /**
@@ -31,15 +30,31 @@ class Processor
      */
     public function run()
     {
-        $rows = $this->rows;
-        while(($step = $this->steps->getNext()) instanceof Step) {
-            try {
-                $rows = $step($rows);
-            } catch (\Exception $e) {
-                break;
-            }
-        }
+        $step = $this->steps->top();
+        return  $step(new Rows([]));
+    }
 
+    /**
+     * Accepts a Rows object and returns a rows object
+     *
+     * @param \ErgonTech\Tabular\Rows $rows
+     * @return Rows
+     */
+    public function __invoke(Rows $rows)
+    {
         return $rows;
+    }
+
+    /**
+     * @param Step $step
+     * @return void
+     */
+    public function addStep(Step $step)
+    {
+        $next = $this->steps->top();
+
+        $this->steps[] = function (Rows $rows) use ($step, $next) {
+            return $step($rows, $next);
+        };
     }
 }

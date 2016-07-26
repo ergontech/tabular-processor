@@ -6,76 +6,53 @@ use ErgonTech\Tabular\Processor;
 use ErgonTech\Tabular\Rows;
 use ErgonTech\Tabular\Step;
 use ErgonTech\Tabular\StepExecutionException;
-use ErgonTech\Tabular\Steps;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
-use Prophecy\Prophecy\MethodProphecy;
-use Prophecy\Prophecy\ObjectProphecy;
 
 class ProcessorSpec extends ObjectBehavior
 {
-    private $rows;
-
-    /**
-     * @var Steps
-     */
-    private $steps;
-
-    public function let(Rows $rows, Steps $steps)
-    {
-        $this->rows = $rows;
-        $this->steps = $steps;
-        $this->beConstructedWith($this->rows, $this->steps);
-    }
 
     public function it_is_initializable()
     {
         $this->shouldHaveType(Processor::class);
     }
 
-    public function it_requires_a_dataprovider_and_steps(Rows $rows, Steps $steps)
+    public function it_can_receive_new_steps(Step $step)
     {
-        $this->shouldThrow(\Exception::class)->during('__construct');
-        $this->beConstructedWith();
+        $this->addStep($step);
     }
 
-    public function it_does_not_process_any_steps_when_there_are_no_valid_steps()
+    public function it_can_run_the_steps(Step $step)
     {
-        $this->steps->getNext()
-            ->willReturn(null)
-            ->shouldBeCalledTimes(1);
-        $this->run();
-    }
-
-    public function it_processes_steps_until_there_are_no_more_valid_steps(Step $step)
-    {
-        $steps = [$step];
-
-        $this->steps->getNext()
-            ->will(function () use (&$steps) {
-                return count($steps)
-                    ? array_pop($steps)
-                    : null;
-            });
-
-        $step->__invoke($this->rows)->shouldBeCalled();
-
-        $this->run();
-    }
-
-    public function it_stops_execution_when_a_step_throws_an_exception(Step $step1, Step $step2)
-    {
-        $step1->__invoke($this->rows)
-            ->willThrow(StepExecutionException::class)
+        $this->addStep($step);
+        $step
+            ->__invoke(
+                Argument::type(Rows::class),
+                Argument::type('callable'))
             ->shouldBeCalled();
-
-        $step2->__invoke($this->rows)
-            ->shouldNotBeCalled();
-
-        $this->steps->getNext()
-            ->willReturn($step1)
-            ->shouldBeCalledTimes(1);
-
         $this->run();
+    }
+
+    public function it_is_a_step(Rows $rows)
+    {
+        $this->__invoke($rows)->shouldReturnAnInstanceOf(Rows::class);
+    }
+
+    public function it_passes_back_the_result_of_the_steps(Rows $rows, Step $step)
+    {
+        $step
+            ->__invoke(
+                Argument::type(Rows::class),
+                Argument::type('callable'))
+            ->willReturn($rows)
+            ->shouldBeCalled();
+        $inputRows = [['asdf', 'asdf']];
+        $rows->getRows()->willReturn($inputRows);
+
+        $this->addStep($step);
+
+        $resultRows = $this->run();
+        $resultRows->shouldHaveType(Rows::class);
+        $resultRows->getRows()->shouldBeLike($inputRows);
     }
 }

@@ -22,6 +22,11 @@ class Rows
     private $dataRows;
 
     /**
+     * @var array
+     */
+    private $rowsAssoc;
+
+    /**
      * Rows constructor.
      * @param array $columnHeaders
      * @param array $dataRows
@@ -41,22 +46,24 @@ class Rows
     }
 
     /**
-     * @return array|false
+     * @return array
      */
-    public function getNextRow()
+    public function getRows()
     {
-        /** @var array|false $value */
-        $value = current($this->dataRows);
-        next($this->dataRows);
-        return $value;
+        return $this->dataRows;
     }
 
     /**
-     * @return array|false
+     * @return array
      */
-    public function getNextRowAssoc()
+    public function getRowsAssoc()
     {
-        $row = $this->getNextRow();
-        return $row === false ? $row : array_combine($this->getColumnHeaders(), $row);
+        if (is_null($this->rowsAssoc)) {
+            $this->rowsAssoc = array_map(function ($dataRow) {
+                return array_combine($this->getColumnHeaders(), $dataRow);
+            }, $this->getRows());
+        }
+
+        return $this->rowsAssoc;
     }
 }

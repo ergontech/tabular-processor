@@ -29,20 +29,21 @@ class RowCallbackValidationStep implements Step
      * Accepts a Rows object and returns a rows object
      *
      * @param \ErgonTech\Tabular\Rows $rows
+     * @param callable $next
      * @return Rows
      * @throws StepExecutionException
      */
-    public function __invoke(Rows $rows)
+    public function __invoke(Rows $rows, callable $next)
     {
         $newRows = clone $rows;
         try {
-            while ($row = $newRows->getNextRowAssoc()) {
+            foreach($newRows->getRowsAssoc() as $row) {
                 $this->rowValidator->__invoke($row, $this->maxValidationLevel);
             }
         } catch (RowValidationException $e) {
             throw new StepExecutionException($e->getMessage());
         }
 
-        return $newRows;
+        return $next($newRows);
     }
 }
