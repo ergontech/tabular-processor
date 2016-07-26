@@ -1,5 +1,5 @@
 {
-    "name": "ergontech/tabular-importer-core",
+    "name": "ergontech/tabular-core",
     "license": "proprietary",
     "authors": [
         { "name": "Matthew Wells", "email": "matthew@ergon.tech" }
