@@ -4,11 +4,11 @@ namespace spec\ErgonTech\Tabular;
 
 use ErgonTech\Tabular\Rows;
 use ErgonTech\Tabular\Step;
-use ErgonTech\Tabular\TransformStep;
+use ErgonTech\Tabular\HeaderTransformStep;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class TransformStepSpec extends ObjectBehavior
+class HeaderTransformStepSpec extends ObjectBehavior
 {
     private $rowsReturner;
     private $outHeaders;
@@ -16,19 +16,26 @@ class TransformStepSpec extends ObjectBehavior
 
     function let(Rows $rows)
     {
-        $mapping = ['a' => 'b', 'c' => 'd'];
-        $inHeaders = ['a', 'c'];
-        $this->outHeaders = ['b', 'd'];
+        $inHeaders = ['a', 'b'];
+        $this->outHeaders = ['A', 'B'];
 
         $this->rowsReturner = function ($rows) { return $rows; };
         $rows->getColumnHeaders()->willReturn($inHeaders);
         $rows->getRows()->willReturn([]);
-        $this->beConstructedWith($mapping);
+        $this->beConstructedWith(function($columnHeader) {
+            return strtoupper($columnHeader);
+        });
         $this->rows = $rows;
     }
+
     function it_is_initializable()
     {
-        $this->shouldHaveType(TransformStep::class);
+        $this->shouldHaveType(HeaderTransformStep::class);
+    }
+
+    function it_needs_a_callable_during_init()
+    {
+        $this->shouldThrow()->during('__construct', [null]);
     }
 
     function it_is_a_step()
@@ -47,17 +54,10 @@ class TransformStepSpec extends ObjectBehavior
         $outRows->getColumnHeaders()->shouldReturn($this->outHeaders);
     }
 
-    function it_returns_a_mapping_for_a_mapped_column_header()
+    function it_returns_a_transformed_column_header()
     {
         $oldColumnHeader = 'a';
-        $newColumnHeader = 'b';
-        $this->getMappedColumnHeader($oldColumnHeader)->shouldReturn($newColumnHeader);
+        $newColumnHeader = 'A';
+        $this->transformColumnHeader($oldColumnHeader)->shouldReturn($newColumnHeader);
     }
-
-    function it_returns_the_same_value_for_column_header_when_not_mapped()
-    {
-        $columnHeader = 'notmapped';
-        $this->getMappedColumnHeader($columnHeader)->shouldReturn($columnHeader);
-    }
-
 }
