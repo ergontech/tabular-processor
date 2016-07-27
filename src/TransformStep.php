@@ -31,10 +31,18 @@ class TransformStep implements Step
         /** @var array $oldHeaders */
         $oldHeaders = $rows->getColumnHeaders();
 
-        $newHeaders = array_map(function ($headerColumn) {
-            return array_key_exists($headerColumn, $this->mapping)
-                ? $this->mapping[$headerColumn] : $headerColumn;
-        }, $oldHeaders);
+        $newHeaders = array_map([$this, 'getMappedColumnHeader'], $oldHeaders);
         return new Rows($newHeaders, $rows->getRows());
+    }
+
+    /**
+     * @param $header
+     * @return mixed
+     */
+    public function getMappedColumnHeader($header)
+    {
+        return array_key_exists($header, $this->mapping)
+            ? $this->mapping[$header]
+            : $header;
     }
 }

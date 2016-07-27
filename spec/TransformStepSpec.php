@@ -47,4 +47,17 @@ class TransformStepSpec extends ObjectBehavior
         $outRows->getColumnHeaders()->shouldReturn($this->outHeaders);
     }
 
+    function it_returns_a_mapping_for_a_mapped_column_header()
+    {
+        $oldColumnHeader = 'a';
+        $newColumnHeader = 'b';
+        $this->getMappedColumnHeader($oldColumnHeader)->shouldReturn($newColumnHeader);
+    }
+
+    function it_returns_the_same_value_for_column_header_when_not_mapped()
+    {
+        $columnHeader = 'notmapped';
+        $this->getMappedColumnHeader($columnHeader)->shouldReturn($columnHeader);
+    }
+
 }
