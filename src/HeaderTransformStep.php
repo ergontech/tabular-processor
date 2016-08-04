@@ -45,6 +45,6 @@ class HeaderTransformStep implements Step
         $oldHeaders = $rows->getColumnHeaders();
 
         $newHeaders = array_map([$this, 'transformColumnHeader'], $oldHeaders);
-        return new Rows($newHeaders, $rows->getRows());
+        return $next(new Rows($newHeaders, $rows->getRows()));
     }
 }
