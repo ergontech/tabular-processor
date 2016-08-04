@@ -43,4 +43,20 @@ class RowsSpec extends ObjectBehavior
         $this->getRowsAssoc()->shouldReturn($resultRowsAssoc);
 
     }
+
+    public function it_returns_nulls_for_empty_row_values_accessed_associatively()
+    {
+        $headers = ['foo', 'bar', 'baz'];
+        $dataRows = [['asdf', 'fdsa']];
+        $resultRowsAssoc = [
+            [
+                'foo' => 'asdf',
+                'bar' => 'fdsa',
+                'baz' => null
+            ]
+        ];
+
+        $this->beConstructedWith($headers, $dataRows);
+        $this->getRowsAssoc()->shouldBeLike($resultRowsAssoc);
+    }
 }

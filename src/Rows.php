@@ -9,6 +9,8 @@
 namespace ErgonTech\Tabular;
 
 
+use Symfony\Component\Process\Exception\LogicException;
+
 class Rows
 {
     /**
@@ -55,12 +57,27 @@ class Rows
 
     /**
      * @return array
+     * @throws \LogicException
      */
     public function getRowsAssoc()
     {
         if (is_null($this->rowsAssoc)) {
-            $this->rowsAssoc = array_map(function ($dataRow) {
-                return array_combine($this->getColumnHeaders(), $dataRow);
+            $headers = $this->getColumnHeaders();
+            $this->rowsAssoc = array_map(function ($dataRow) use($headers) {
+                // If there is an empty row value for a given column, fill it in with null
+                if (count($headers) > count($dataRow)) {
+                    return array_combine(
+                        $headers,
+                        array_merge(
+                            $dataRow,
+                            array_fill(count($dataRow), count($headers) - count($dataRow), null)));
+                }
+
+                if (count($headers) < count($dataRow)) {
+                    throw new \LogicException('The length of data must be at most equal to that of the headers!');
+                }
+
+                return array_combine($headers, $dataRow);
             }, $this->getRows());
         }
 
