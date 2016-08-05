@@ -53,8 +53,9 @@ class Processor
     {
         $next = $this->steps->top();
 
-        $this->steps[] = function (Rows $rows) use ($step, $next) {
-            return $step($rows, $next);
+        $callback = function (Rows $rows) use ($next) {
+            return $this($rows, $next);
         };
-    }
-}
+
+        $this->steps[] = $callback->bindTo($step);
+    }}

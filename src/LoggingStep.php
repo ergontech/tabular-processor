@@ -70,7 +70,7 @@ class LoggingStep implements Step
         // Then we could introduce an annotation: @description
         if ($next instanceof \Closure) {
             $info = new \ReflectionFunction($next);
-            return $info->getClosureScopeClass()->getShortName();
+            return (new \ReflectionClass($info->getClosureThis()))->getShortName();
         }
 
         if (is_string($next)) {
