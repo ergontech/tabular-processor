@@ -11,6 +11,10 @@ use Prophecy\Argument;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
+function thing (Rows $rows) {
+    return $rows;
+}
+
 class LoggingStepSpec extends ObjectBehavior
 {
     private $logger;
@@ -55,11 +59,38 @@ class LoggingStepSpec extends ObjectBehavior
             throw new StepExecutionException($msg);
         };
         $this->shouldThrow(StepExecutionException::class)->during('__invoke', [$rows, $f]);
-        $this->logger->log(LogLevel::ERROR, "Exception during step: \"{$msg}\"")->shouldHaveBeenCalled();
+        $this->logger->log(LogLevel::ERROR, "Exception during LoggingStepSpec: \"{$msg}\"")->shouldHaveBeenCalled();
     }
 
     function it_returns_rows_upon_invocation(Rows $rows)
     {
         $this->__invoke($rows, $this->rowsReturner)->shouldReturnAnInstanceOf(Rows::class);
+    }
+
+    function it_gets_info_for_next_closure(Rows $rows)
+    {
+        $rows->getRows()->willReturn(['item']);
+        $this->logger->log(
+            LogLevel::INFO, 'LoggingStepSpec started. 1 rows to process'
+        )->shouldBeCalled();
+        $this->logger->log(
+            LogLevel::INFO, 'LoggingStepSpec finished. 1 rows in output'
+        )->shouldBeCalled();
+        $next = function () use($rows) { return $rows; };
+        $this->__invoke($rows, $next);
+    }
+
+    function it_gets_info_for_builtin_functions(Rows $rows)
+    {
+        $rows->getRows()->willReturn(['item']);
+        $next = 'spec\ErgonTech\Tabular\thing';
+
+        $this->logger->log(
+            LogLevel::INFO, $next . ' started. 1 rows to process'
+        )->shouldBeCalled();
+        $this->logger->log(
+            LogLevel::INFO, $next . ' finished. 1 rows in output'
+        )->shouldBeCalled();
+        $this->__invoke($rows, $next);
     }
 }

@@ -65,6 +65,18 @@ class LoggingStep implements Step
         if ($next instanceof Step) {
             return get_class($next);
         }
+
+        // It'd be great to introduce a doc comment evaluator here
+        // Then we could introduce an annotation: @description
+        if ($next instanceof \Closure) {
+            $info = new \ReflectionFunction($next);
+            return $info->getClosureScopeClass()->getShortName();
+        }
+
+        if (is_string($next)) {
+            return $next;
+        }
+
         return 'step';
     }
 }
