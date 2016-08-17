@@ -31,16 +31,11 @@ class RowsTransformStep implements Step
      */
     public function __invoke(Rows $rows, callable $next)
     {
-        $columnHeaders = $rows->getColumnHeaders();
+        $transformedRowsAssoc = array_map($this->transformer, $rows->getRowsAssoc());
 
-        $transformedRows = array_reduce($rows->getRows(), function ($carry, $row) use ($columnHeaders) {
-            $originalAssocRow = array_combine($columnHeaders, $row);
-            $transformedAssocRow = call_user_func($this->transformer, $originalAssocRow);
+        $transformedColumnHeaders = array_keys(current($transformedRowsAssoc));
+        $transformedRows = array_map('array_values', $transformedRowsAssoc);
 
-            // Return JUST THE VALUES of the transformed associative row
-            return array_merge($carry, [array_values($transformedAssocRow)]);
-        }, []);
-
-        return new Rows($columnHeaders, $transformedRows);
+        return $next(new Rows($transformedColumnHeaders, $transformedRows));
     }
 }

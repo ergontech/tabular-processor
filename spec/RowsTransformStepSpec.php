@@ -61,9 +61,12 @@ class RowsTransformStepSpec extends ObjectBehavior
     function it_transforms_rows_upon_invocation()
     {
         $transformerFunc = function (array $row) {
-            $row['bar'] = ['test' => $row['bar']];
-
-            return $row;
+            return [
+                'bar' => [
+                    'foo' => $row['foo'],
+                    'test' => $row['bar']
+                ]
+            ];
         };
         $this->beConstructedWith($transformerFunc);
 
@@ -71,9 +74,10 @@ class RowsTransformStepSpec extends ObjectBehavior
 
         $returnedRows->shouldBeAnInstanceOf(Rows::class);
         $returnedRows->getRows()->shouldReturn([
-            ['a1', ['test' => 'a2']],
-            ['b1', ['test' => 'b2']]
+            [['foo' => 'a1', 'test' => 'a2']],
+            [['foo' => 'b1', 'test' => 'b2']]
         ]);
+        $returnedRows->getColumnHeaders()->shouldReturn(['bar']);
 
     }
 }
