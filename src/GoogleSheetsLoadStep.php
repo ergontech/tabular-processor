@@ -55,7 +55,11 @@ class GoogleSheetsLoadStep implements Step
     {
         $headers = $this->sheetsService->spreadsheets_values->get($this->sheetId, $this->headerRangeName)->getValues();
         $values = $this->sheetsService->spreadsheets_values->get($this->sheetId, $this->dataRangeName)->getValues();
-        $rows = new Rows($headers[0], $values);
-        return $next($rows);
+        $fill = array_fill(0, count($headers[0]), null);
+        return $next(new Rows(
+            $headers[0],
+            array_map(function ($data) use($fill) {
+                return $data + $fill;
+            }, $values)));
     }
 }

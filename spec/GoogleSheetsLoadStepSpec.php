@@ -25,7 +25,8 @@ class GoogleSheetsLoadStepSpec extends ObjectBehavior
         \Google_Service_Sheets_Resource_SpreadsheetsValues $spreadsheetsValues,
         \Google_Service_Sheets_ValueRange $headerRange,
         \Google_Service_Sheets_ValueRange $dataRange
-    ) {
+    )
+    {
         $this->sheetId = '123';
         $this->headerRangeName = 'header';
         $this->dataRangeName = 'data';
@@ -45,9 +46,15 @@ class GoogleSheetsLoadStepSpec extends ObjectBehavior
             return array_combine($this->rowHeaders[0], $dataRow);
         }, $this->rowValues);
 
-        $headerRange->getValues()->willReturn($this->rowHeaders);
+        $self = $this;
 
-        $dataRange->getValues()->willReturn($this->rowValues);
+        $headerRange->getValues()->will(function () use($self) {
+            return $self->rowHeaders;
+        });
+
+        $dataRange->getValues()->will(function () use($self) {
+            return $self->rowValues;
+        });
 
         $this->spreadSheetsValues
             ->get(
@@ -64,11 +71,6 @@ class GoogleSheetsLoadStepSpec extends ObjectBehavior
         $this->serviceSheets->spreadsheets_values = $spreadsheetsValues;
 
         $this->beConstructedWith($serviceSheets, $this->sheetId, $this->headerRangeName, $this->dataRangeName);
-    }
-
-    public function it_is_initializable()
-    {
-        $this->shouldHaveType(GoogleSheetsLoadStep::class);
     }
 
     public function it_is_a_step()
@@ -96,5 +98,15 @@ class GoogleSheetsLoadStepSpec extends ObjectBehavior
         /** @var Rows $rows */
         $rows = $this->__invoke($rows, $this->rowsReturner);
         $rows->getRowsAssoc()->shouldEqual($this->rowsAssoc);
+    }
+
+    public function it_ensures_row_counts_match_headers_count(Rows $rows)
+    {
+        $this->rowHeaders = [['foo', 'bar', 'baz']];
+        $rows = $this->__invoke($rows, $this->rowsReturner);
+        $rows->getRows()->shouldReturn([
+            ['valuefoo1', 'valuebar1', null],
+            ['valuefoo2', 'valuebar2', null]
+        ]);
     }
 }
