@@ -23,10 +23,9 @@ class MergeStepSpec extends ObjectBehavior
     {
         $this->rows = $rows;
         $this->rows->getRowsAssoc()->willReturn([]);
+        $this->rows->getColumnHeaders()->willReturn([]);
         $this->next = $mergenext;
-        $this->beConstructedWith(function ($current, $new) {
-            return array_merge_recursive($current, $new);
-        });
+        $this->beConstructedWith('key');
     }
 
     function it_is_initializable()
@@ -53,35 +52,27 @@ class MergeStepSpec extends ObjectBehavior
 
     function it_merges_rows_based_on_comparison_of_a_key()
     {
-        $this->beConstructedWith(function ($current, $new) {
-            $keyVal = $new['key'];
-            if (array_key_exists($keyVal, $current)) {
-                $current[$keyVal] = [
-                    'key' => $keyVal,
-                    'other' => array_merge($current[$keyVal]['other'], $new['other'])
-                ];
-            } else {
-                $current[$keyVal] = $new;
-            }
-            return $current;
-        });
+        $this->beConstructedWith('key');
 
         $this->rows->getRowsAssoc()->willReturn([
-            ['key' => 'val1', 'other' => ['one' => 'asdf']],
-            ['key' => 'val1', 'other' => ['two' => 'fdsa']],
-            ['key' => 'val2', 'other' => ['one']],
-            ['key' => 'val3', 'other' => ['one']],
-            ['key' => 'val2', 'other' => ['two']]
+            ['key' => 'val1', 'other' => 'one'],
+            ['key' => 'val1', 'other' => 'two'],
+            ['key' => 'val2', 'other' => 'three'],
+            ['key' => 'val3', 'other' => 'four'],
+            ['key' => 'val2', 'other' => 'five'],
+            ['key' => 'val1', 'other' => 'six']
         ]);
+
+        $this->rows->getColumnHeaders()->willReturn(['key', 'other']);
 
         $this->next->__invoke(Argument::type(Rows::class))->will(function ($args) {
             return $args[0];
         });
 
         $expectation = [
-            ['key' => 'val1', 'other' => ['one' => 'asdf', 'two' => 'fdsa']],
-            ['key' => 'val2', 'other' => ['one', 'two']],
-            ['key' => 'val3', 'other' => ['one']]
+            ['key' => 'val1', 'other' => ['one', 'two', 'six']],
+            ['key' => 'val2', 'other' => ['three', 'five']],
+            ['key' => 'val3', 'other' => ['four']]
         ];
 
         $output = $this->__invoke($this->rows, $this->next);
