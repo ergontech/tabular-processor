@@ -49,7 +49,7 @@ class LoggingStep implements Step
         }
 
         $this->logger->log(
-            LogLevel::INFO,
+            LogLevel::DEBUG,
             sprintf('%s finished. %d rows in output', $nextInfo, count($result->getRows())));
 
         return $result;
